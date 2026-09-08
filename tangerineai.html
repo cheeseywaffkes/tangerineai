@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TangerineAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --tangerine:#FF6A1A;
+    --tangerine-dark:#D9530F;
+    --tangerine-light:#FFA469;
+    --peel-green:#2F5233;
+    --peel-green-light:#4C7A50;
+    --screen-bg:#FFFFFF;
+    --card-bg:#FFF7F0;
+    --ink:#241A12;
+    --ink-soft:#7A6C60;
+    --line:#F0E2D2;
+    --stage-1:#1B120A;
+    --stage-2:#2B1608;
+  }
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --stage-1:#140D07; --stage-2:#241205; }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',-apple-system,sans-serif;
+    background: radial-gradient(120% 100% at 50% -10%, var(--stage-2), var(--stage-1) 60%);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--ink);
+    overflow-x:hidden;
+    position:relative;
+  }
+  .blob{position:fixed;border-radius:50%;filter:blur(60px);opacity:.35;pointer-events:none;z-index:0;}
+  .blob1{width:520px;height:520px;background:var(--tangerine);top:-180px;left:-160px;}
+  .blob2{width:420px;height:420px;background:var(--peel-green);bottom:-160px;right:-140px;opacity:.28;}
+
+  .stage-wrap{position:relative;z-index:1;padding:36px 16px;width:100%;display:flex;justify-content:center;}
+
+  .phone{
+    width:390px;
+    max-width:94vw;
+    height:800px;
+    max-height:92vh;
+    background:#150D06;
+    border-radius:46px;
+    padding:12px;
+    box-shadow: 0 40px 90px -20px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.04);
+    display:flex;
+    flex-direction:column;
+  }
+  .screen{
+    background:var(--screen-bg);
+    border-radius:36px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    position:relative;
+  }
+
+  /* header */
+  .app-header{
+    display:flex;align-items:center;gap:10px;
+    padding:20px 20px 14px;
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .logo-mark{width:34px;height:34px;flex-shrink:0;}
+  .wordmark{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.01em;}
+  .tagline{font-size:11px;color:var(--ink-soft);margin-top:1px;}
+  .header-text{flex:1;min-width:0;}
+  .icon-btn{
+    width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+    background:var(--card-bg);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;color:var(--ink);
+  }
+  .icon-btn:active{transform:scale(.94);}
+
+  /* step dots */
+  .stepper{display:flex;gap:6px;padding:14px 20px 0;flex-shrink:0;}
+  .dot{height:4px;flex:1;border-radius:3px;background:var(--line);}
+  .dot.active{background:var(--tangerine);}
+  .dot.done{background:var(--tangerine-light);}
+
+  .content{
+    flex:1;overflow-y:auto;padding:20px;
+    display:flex;flex-direction:column;
+    gap:16px;
+  }
+  .content::-webkit-scrollbar{width:0;}
+
+  h2.view-title{
+    font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;margin:2px 0 0;letter-spacing:-.01em;
+  }
+  p.view-sub{font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;line-height:1.5;}
+
+  /* language pickers */
+  .field-label{font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;display:block;}
+  .lang-row{
+    background:var(--card-bg);border:1px solid var(--line);border-radius:16px;padding:12px 14px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .lang-row select{
+    flex:1;border:none;background:transparent;font-family:'Inter';font-size:15px;font-weight:600;color:var(--ink);
+    appearance:none;-webkit-appearance:none;cursor:pointer;
+  }
+  .lang-row .flag{font-size:20px;}
+  .swap-btn{
+    align-self:center;width:32px;height:32px;border-radius:50%;background:var(--tangerine);
+    color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    margin:-4px auto;flex-shrink:0;
+  }
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:2px 2px;}
+  .toggle-row span{font-size:13.5px;font-weight:500;}
+  .switch{position:relative;width:42px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider-pill{position:absolute;inset:0;background:var(--line);border-radius:20px;cursor:pointer;transition:.2s;}
+  .slider-pill:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+  .switch input:checked + .slider-pill{background:var(--tangerine);}
+  .switch input:checked + .slider-pill:before{transform:translateX(18px);}
+  .switch input:disabled + .slider-pill{opacity:.45;cursor:not-allowed;}
+
+  .primary-btn{
+    background:var(--tangerine);color:#fff;border:none;border-radius:16px;
+    padding:15px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .primary-btn:active{background:var(--tangerine-dark);}
+  .ghost-btn{
+    background:transparent;color:var(--tangerine-dark);border:1.5px solid var(--tangerine-light);
+    border-radius:16px;padding:13px;font-family:'Inter';font-weight:600;font-size:14px;cursor:pointer;
+  }
+
+  /* listen view */
+  .mic-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:10px 0;}
+  .mic-wrap{position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center;}
+  .mic-ring{
+    position:absolute;inset:0;border-radius:50%;
+    background: conic-gradient(from 0deg, var(--tangerine) 0 16.6%, var(--tangerine-light) 16.6% 33.3%, var(--tangerine) 33.3% 50%, var(--tangerine-light) 50% 66.6%, var(--tangerine) 66.6% 83.3%, var(--tangerine-light) 83.3% 100%);
+    opacity:.18;
+  }
+  .mic-btn{
+    position:relative;width:110px;height:110px;border-radius:50%;border:none;
+    background:var(--tangerine);color:#fff;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;box-shadow:0 12px 30px -8px rgba(255,106,26,.6);
+    transition:transform .15s;
+  }
+  .mic-btn.listening{background:var(--tangerine-dark);animation:pulse 1.1s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,106,26,.5);}70%{box-shadow:0 0 0 22px rgba(255,106,26,0);}100%{box-shadow:0 0 0 0 rgba(255,106,26,0);}}
+  .mic-btn:active{transform:scale(.95);}
+  .mic-status{font-size:13.5px;color:var(--ink-soft);text-align:center;min-height:18px;}
+  .waveform{display:flex;gap:4px;align-items:center;height:22px;}
+  .waveform span{width:3px;background:var(--tangerine);border-radius:2px;animation:wave 1s ease-in-out infinite;}
+  .waveform span:nth-child(1){height:8px;animation-delay:0s;}
+  .waveform span:nth-child(2){height:18px;animation-delay:.1s;}
+  .waveform span:nth-child(3){height:10px;animation-delay:.2s;}
+  .waveform span:nth-child(4){height:20px;animation-delay:.3s;}
+  .waveform span:nth-child(5){height:9px;animation-delay:.4s;}
+  @keyframes wave{0%,100%{transform:scaleY(.5);}50%{transform:scaleY(1);}}
+
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+  .chip{
+    background:var(--card-bg);border:1px solid var(--line);border-radius:100px;
+    padding:8px 13px;font-size:12.5px;color:var(--ink);cursor:pointer;
+  }
+  .chip:active{background:var(--tangerine-light);color:#fff;}
+
+  .type-row{display:flex;gap:8px;margin-top:auto;}
+  .type-row input{
+    flex:1;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-family:'Inter';font-size:14px;
+    background:var(--card-bg);color:var(--ink);
+  }
+  .type-row input:focus{outline:2px solid var(--tangerine-light);}
+  .send-btn{
+    width:44px;border-radius:14px;background:var(--ink);color:#fff;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+
+  /* translate view */
+  .bubble{border-radius:18px;padding:16px;}
+  .bubble.original{background:var(--card-bg);border:1px solid var(--line);}
+  .bubble.translated{background:var(--ink);color:#fff;}
+  .bubble-label{font-size:11px;text-transform:none;font-weight:600;opacity:.6;margin-bottom:6px;}
+  .bubble-text{font-size:17px;font-weight:600;line-height:1.4;}
+  .bubble.translated .bubble-text{font-family:'Space Grotesk',sans-serif;}
+  .roman{font-size:12.5px;opacity:.7;margin-top:6px;font-style:italic;}
+  .play-row{display:flex;align-items:center;gap:10px;margin-top:12px;}
+  .play-btn{
+    width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  }
+  .play-btn:active{background:rgba(255,255,255,.3);}
+
+  .tone-toggle{display:flex;background:var(--card-bg);border:1px solid var(--line);border-radius:14px;padding:4px;}
+  .tone-toggle button{
+    flex:1;border:none;background:transparent;padding:9px;border-radius:10px;font-size:13px;font-weight:600;
+    color:var(--ink-soft);cursor:pointer;font-family:'Inter';
+  }
+  .tone-toggle button.active{background:var(--tangerine);color:#fff;}
+
+  .vocab-card{
+    background:var(--card-bg);border:1px dashed var(--tangerine-light);border-radius:16px;padding:14px;
+    display:flex;gap:12px;align-items:flex-start;
+  }
+  .vocab-word{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;color:var(--tangerine-dark);}
+  .vocab-meaning{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+
+  .demo-note{
+    background:#FFF3E4;border:1px solid var(--tangerine-light);border-radius:14px;padding:12px 14px;
+    font-size:12.5px;color:var(--tangerine-dark);line-height:1.5;
+  }
+
+  .btn-row{display:flex;gap:10px;margin-top:auto;}
+  .btn-row .primary-btn,.btn-row .ghost-btn{flex:1;}
+
+  /* summary */
+  .stat-row{display:flex;gap:10px;}
+  .stat-card{flex:1;background:var(--card-bg);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:center;}
+  .stat-num{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:var(--tangerine-dark);}
+  .stat-label{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .vision-line{
+    text-align:center;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;
+    color:var(--ink);padding:18px 10px;line-height:1.5;
+  }
+
+  /* history / phrasebook */
+  .hist-item{
+    border-bottom:1px solid var(--line);padding:12px 2px;display:flex;flex-direction:column;gap:2px;
+  }
+  .hist-top{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);}
+  .hist-orig{font-size:13.5px;color:var(--ink-soft);}
+  .hist-trans{font-size:15px;font-weight:600;}
+  .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--ink-soft);text-align:center;padding:30px;}
+  .empty-state svg{opacity:.4;}
+  .empty-state p{font-size:13px;margin:0;max-width:220px;}
+
+  .vocab-list-item{
+    display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:12px 2px;gap:10px;
+  }
+  .vocab-list-item .remove{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:12px;flex-shrink:0;}
+
+  /* bottom nav */
+  .bottom-nav{
+    display:flex;border-top:1px solid var(--line);flex-shrink:0;background:var(--screen-bg);
+  }
+  .nav-btn{
+    flex:1;border:none;background:transparent;padding:11px 4px 10px;display:flex;flex-direction:column;
+    align-items:center;gap:3px;cursor:pointer;color:var(--ink-soft);
+  }
+  .nav-btn.active{color:var(--tangerine-dark);}
+  .nav-btn span{font-size:10.5px;font-weight:600;}
+
+  /* settings sheet */
+  .sheet-overlay{
+    position:absolute;inset:0;background:rgba(20,12,6,.45);display:none;align-items:flex-end;z-index:5;border-radius:36px;
+  }
+  .sheet-overlay.open{display:flex;}
+  .sheet{
+    background:var(--screen-bg);width:100%;border-radius:24px 24px 0 0;padding:22px 20px 26px;
+    display:flex;flex-direction:column;gap:16px;
+  }
+  .sheet h3{font-family:'Space Grotesk',sans-serif;margin:0;font-size:17px;}
+  .sheet-close{align-self:center;width:36px;height:4px;background:var(--line);border-radius:3px;margin-bottom:-8px;}
+  .about-text{font-size:12.5px;color:var(--ink-soft);line-height:1.6;}
+
+  @media (max-width:480px){
+    .stage-wrap{padding:0;}
+    .phone{width:100vw;height:100vh;max-height:100vh;border-radius:0;padding:0;box-shadow:none;}
+    .screen{border-radius:0;}
+    .blob{display:none;}
+  }
+
+  /* ---- Learn tab ---- */
+  .learn-stats{display:flex;gap:10px;}
+  .learn-stat{
+    flex:1;background:var(--card-bg);border:1px solid var(--line);border-radius:16px;padding:12px;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+  }
+  .learn-stat .val{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:var(--tangerine-dark);display:flex;align-items:center;gap:4px;}
+  .learn-stat .lbl{font-size:10.5px;color:var(--ink-soft);}
+
+  .lesson-card{
+    display:flex;align-items:center;gap:12px;background:var(--card-bg);border:1px solid var(--line);
+    border-radius:16px;padding:13px 14px;cursor:pointer;text-align:left;width:100%;
+  }
+  .lesson-card.locked{opacity:.5;cursor:not-allowed;}
+  .lesson-card .emoji{font-size:26px;flex-shrink:0;width:38px;text-align:center;}
+  .lesson-card .info{flex:1;min-width:0;}
+  .lesson-card .title{font-weight:700;font-size:14.5px;font-family:'Space Grotesk',sans-serif;}
+  .lesson-card .sub{font-size:11.5px;color:var(--ink-soft);margin-top:1px;}
+  .lesson-card .badge{
+    flex-shrink:0;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--peel-green);color:#fff;
+  }
+  .lesson-card .lock-ic{flex-shrink:0;color:var(--ink-soft);}
+
+  .lesson-detail-card{
+    background:var(--card-bg);border:1px solid var(--line);border-radius:20px;padding:20px;text-align:center;
+  }
+  .lesson-detail-card .emoji{font-size:44px;}
+  .lesson-detail-card h3{font-family:'Space Grotesk',sans-serif;margin:8px 0 2px;font-size:19px;}
+  .word-chip-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
+  .word-chip{background:#fff;border:1px solid var(--line);border-radius:100px;padding:5px 11px;font-size:11.5px;}
+
+  .flash-progress{font-size:11.5px;color:var(--ink-soft);text-align:center;}
+  .flashcard-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6px 0;}
+  .flashcard{
+    width:100%;max-width:270px;height:190px;position:relative;cursor:pointer;
+  }
+  .flashcard-face{
+    position:absolute;inset:0;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:16px;backface-visibility:hidden;
+  }
+  .flashcard-face.front{background:var(--ink);color:#fff;}
+  .flashcard-face.back{background:var(--tangerine);color:#fff;transform:rotateY(180deg);}
+  .flashcard.flipped .flashcard-face.front{transform:rotateY(180deg);}
+  .flashcard.flipped .flashcard-face.back{transform:rotateY(360deg);}
+  .flashcard-face .word{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;text-align:center;}
+  .flashcard-face .roman{color:rgba(255,255,255,.85);font-style:normal;margin-top:6px;}
+  .flashcard-face .hint{position:absolute;bottom:12px;font-size:10.5px;opacity:.7;}
+  .flash-nav-row{display:flex;gap:10px;justify-content:center;align-items:center;}
+  .flash-nav-btn{
+    width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card-bg);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);flex-shrink:0;
+  }
+
+  .quiz-progress-bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;}
+  .quiz-progress-fill{height:100%;background:var(--tangerine);border-radius:3px;transition:width .25s;}
+  .quiz-prompt-card{
+    background:var(--card-bg);border:1px solid var(--line);border-radius:18px;padding:22px 16px;text-align:center;
+  }
+  .quiz-prompt-card .lbl{font-size:11px;color:var(--ink-soft);margin-bottom:6px;}
+  .quiz-prompt-card .word{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;}
+  .quiz-option{
+    background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:14.5px;font-weight:600;
+    text-align:left;cursor:pointer;color:var(--ink);
+  }
+  .quiz-option.correct{border-color:var(--peel-green);background:#EAF4EA;color:var(--peel-green);}
+  .quiz-option.incorrect{border-color:#D9503A;background:#FBEAE7;color:#B8402C;}
+  .quiz-option.disabled{pointer-events:none;}
+
+  .quiz-result-card{
+    background:var(--card-bg);border:1px solid var(--line);border-radius:20px;padding:24px 18px;text-align:center;
+  }
+  .quiz-result-card .big-emoji{font-size:44px;}
+  .quiz-result-card .score{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;margin-top:4px;}
+  .xp-pill{
+    display:inline-flex;align-items:center;gap:5px;background:var(--tangerine);color:#fff;border-radius:100px;
+    padding:5px 12px;font-size:12.5px;font-weight:700;margin-top:8px;
+  }
+</style>
+</head>
+<body>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="stage-wrap">
+  <div class="phone">
+    <div class="screen">
+
+      <div class="app-header">
+        <svg class="logo-mark" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="17" fill="#FF6A1A"/>
+          <g stroke="#D9530F" stroke-width="1.2" opacity=".55">
+            <line x1="20" y1="3" x2="20" y2="37"/>
+            <line x1="4.4" y1="10" x2="35.6" y2="30"/>
+            <line x1="4.4" y1="30" x2="35.6" y2="10"/>
+          </g>
+          <ellipse cx="25" cy="5" rx="4.5" ry="2.4" fill="#2F5233" transform="rotate(28 25 5)"/>
+        </svg>
+        <div class="header-text">
+          <div class="wordmark">TangerineAI</div>
+          <div class="tagline">Beyond Borders, Beyond Languages</div>
+        </div>
+        <button class="icon-btn" onclick="toggleSettings(true)" aria-label="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </button>
+      </div>
+
+      <div id="stepper" class="stepper"></div>
+      <div id="content" class="content"></div>
+
+      <div class="bottom-nav">
+        <button class="nav-btn" data-tab="talk" onclick="setTab('talk')">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4"/></svg>
+          <span>Talk</span>
+        </button>
+        <button class="nav-btn" data-tab="learn" onclick="setTab('learn')">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M9 7h6M9 11h6"/></svg>
+          <span>Learn</span>
+        </button>
+        <button class="nav-btn" data-tab="history" onclick="setTab('history')">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+          <span>History</span>
+        </button>
+        <button class="nav-btn" data-tab="phrasebook" onclick="setTab('phrasebook')">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          <span>Phrasebook</span>
+        </button>
+      </div>
+
+      <div id="sheetOverlay" class="sheet-overlay" onclick="if(event.target===this) toggleSettings(false)">
+        <div class="sheet">
+          <div class="sheet-close"></div>
+          <h3>Settings</h3>
+          <div class="toggle-row">
+            <span>Offline mode</span>
+            <label class="switch"><input type="checkbox" disabled><span class="slider-pill"></span></label>
+          </div>
+          <p class="about-text" style="margin:-10px 0 0;">Coming soon — from our roadmap for travelers with unreliable signal.</p>
+          <div style="height:1px;background:var(--line);"></div>
+          <p class="about-text"><strong style="color:var(--ink);">About this prototype:</strong> TangerineAI breaks language barriers through real‑time AI translation. This build is an interactive concept demo from our pitch prototype — it uses your browser's own speech and voice tools, matched against a small curated phrasebook, rather than a live translation model.</p>
+          <button class="ghost-btn" onclick="toggleSettings(false)">Close</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const LANGS = {
+  en:{name:'English', flag:'🇺🇸', code:'en-US'},
+  ko:{name:'Korean', flag:'🇰🇷', code:'ko-KR'},
+};
+
+const DICT = [
+  { en:"Hello, how are you?",
+    translations:{
+      ko:{casual:"안녕, 잘 지내?", formal:"안녕하세요, 잘 지내세요?", roman:"Annyeong(haseyo), jal jinae(seyo)?"},
+    },
+    vocab:{ ko:{word:"안녕하세요",roman:"Annyeonghaseyo",meaning:"Hello (polite)"} }
+  },
+  { en:"Thank you very much.",
+    translations:{
+      ko:{casual:"정말 고마워!", formal:"정말 감사합니다.", roman:"Jeongmal go(masahamni)da."},
+    },
+    vocab:{ ko:{word:"감사합니다",roman:"Gamsahamnida",meaning:"Thank you (polite)"} }
+  },
+  { en:"Where is the bathroom?",
+    translations:{
+      ko:{casual:"화장실이 어디야?", formal:"화장실이 어디예요?", roman:"Hwajangsiri eodi(yeyo)?"},
+    },
+    vocab:{ ko:{word:"화장실",roman:"Hwajangsil",meaning:"Bathroom"} }
+  },
+  { en:"How much does this cost?",
+    translations:{
+      ko:{casual:"이거 얼마야?", formal:"이거 얼마예요?", roman:"Igeo eolma(yeyo)?"},
+    },
+    vocab:{ ko:{word:"얼마",roman:"Eolma",meaning:"How much"} }
+  },
+  { en:"Can you help me?",
+    translations:{
+      ko:{casual:"도와줄래?", formal:"도와주시겠어요?", roman:"Dowaju(sigesseoyo)?"},
+    },
+    vocab:{ ko:{word:"도와주세요",roman:"Dowajuseyo",meaning:"Please help"} }
+  },
+  { en:"I don't understand.",
+    translations:{
+      ko:{casual:"이해가 안 돼.", formal:"이해가 안 돼요.", roman:"Ihaega an dwae(yo)."},
+    },
+    vocab:{ ko:{word:"이해가 안 돼요",roman:"Ihaega an dwaeyo",meaning:"I don't understand"} }
+  },
+  { en:"Nice to meet you.",
+    translations:{
+      ko:{casual:"반가워!", formal:"만나서 반갑습니다.", roman:"Bangawo! / Mannaseo bangapseumnida."},
+    },
+    vocab:{ ko:{word:"반갑습니다",roman:"Bangapseumnida",meaning:"Nice to meet you"} }
+  },
+  { en:"Where is the train station?",
+    translations:{
+      ko:{casual:"역이 어디야?", formal:"역이 어디예요?", roman:"Yeogi eodi(yeyo)?"},
+    },
+    vocab:{ ko:{word:"역",roman:"Yeok",meaning:"Station"} }
+  },
+];
+
+const LEARN_LESSONS = [
+  { id:'greetings', title:'Greetings', emoji:'👋',
+    words:[
+      {en:'Hello', ko:'안녕하세요', roman:'Annyeonghaseyo'},
+      {en:'Goodbye', ko:'안녕히 가세요', roman:'Annyeonghi gaseyo'},
+      {en:'Thank you', ko:'감사합니다', roman:'Gamsahamnida'},
+      {en:'Please', ko:'제발', roman:'Jebal'},
+      {en:'Yes', ko:'네', roman:'Ne'},
+      {en:'No', ko:'아니요', roman:'Aniyo'},
+      {en:'Sorry', ko:'죄송합니다', roman:'Joesonghamnida'},
+      {en:'Excuse me', ko:'실례합니다', roman:'Sillyehamnida'},
+    ]
+  },
+  { id:'numbers', title:'Numbers', emoji:'🔢',
+    words:[
+      {en:'One', ko:'일', roman:'Il'},
+      {en:'Two', ko:'이', roman:'I'},
+      {en:'Three', ko:'삼', roman:'Sam'},
+      {en:'Four', ko:'사', roman:'Sa'},
+      {en:'Five', ko:'오', roman:'O'},
+      {en:'Six', ko:'육', roman:'Yuk'},
+      {en:'Seven', ko:'칠', roman:'Chil'},
+      {en:'Eight', ko:'팔', roman:'Pal'},
+      {en:'Nine', ko:'구', roman:'Gu'},
+      {en:'Ten', ko:'십', roman:'Sip'},
+    ]
+  },
+  { id:'colors', title:'Colors', emoji:'🎨',
+    words:[
+      {en:'Red', ko:'빨간색', roman:'Ppalgansaek'},
+      {en:'Blue', ko:'파란색', roman:'Paransaek'},
+      {en:'Green', ko:'초록색', roman:'Choroksaek'},
+      {en:'Yellow', ko:'노란색', roman:'Noransaek'},
+      {en:'Black', ko:'검은색', roman:'Geomeunsaek'},
+      {en:'White', ko:'하얀색', roman:'Hayansaek'},
+      {en:'Orange', ko:'주황색', roman:'Juhwangsaek'},
+      {en:'Purple', ko:'보라색', roman:'Borasaek'},
+    ]
+  },
+  { id:'days', title:'Days of the Week', emoji:'📅',
+    words:[
+      {en:'Monday', ko:'월요일', roman:'Woryoil'},
+      {en:'Tuesday', ko:'화요일', roman:'Hwayoil'},
+      {en:'Wednesday', ko:'수요일', roman:'Suyoil'},
+      {en:'Thursday', ko:'목요일', roman:'Mogyoil'},
+      {en:'Friday', ko:'금요일', roman:'Geumyoil'},
+      {en:'Saturday', ko:'토요일', roman:'Toyoil'},
+      {en:'Sunday', ko:'일요일', roman:'Iryoil'},
+    ]
+  },
+  { id:'food', title:'Food & Drink', emoji:'🍜',
+    words:[
+      {en:'Rice', ko:'밥', roman:'Bap'},
+      {en:'Water', ko:'물', roman:'Mul'},
+      {en:'Coffee', ko:'커피', roman:'Keopi'},
+      {en:'Tea', ko:'차', roman:'Cha'},
+      {en:'Meat', ko:'고기', roman:'Gogi'},
+      {en:'Vegetable', ko:'채소', roman:'Chaeso'},
+      {en:'Fruit', ko:'과일', roman:'Gwail'},
+      {en:'Bread', ko:'빵', roman:'Ppang'},
+    ]
+  },
+  { id:'phrases', title:'Travel Phrases', emoji:'✈️',
+    words:[
+      {en:'Where is the bathroom?', ko:'화장실이 어디예요?', roman:'Hwajangsiri eodiyeyo?'},
+      {en:'How much does this cost?', ko:'이거 얼마예요?', roman:'Igeo eolmayeyo?'},
+      {en:'Can you help me?', ko:'도와주시겠어요?', roman:'Dowajusigesseoyo?'},
+      {en:"I don't understand.", ko:'이해가 안 돼요.', roman:'Ihaega an dwaeyo.'},
+      {en:'Nice to meet you.', ko:'만나서 반갑습니다.', roman:'Mannaseo bangapseumnida.'},
+      {en:'Where is the train station?', ko:'역이 어디예요?', roman:'Yeogi eodiyeyo?'},
+    ]
+  },
+];
+
+let state = {
+  tab:'talk', step:'setup',
+  from:'en', to:'ko', autoDetect:false, tone:'casual',
+  listening:false, currentMatch:null, currentCustomText:null,
+  sessionExchanges:0, sessionVocab:[],
+  learnProgress: loadJSON('tangerine_learn_progress', {xp:0, streak:0, lastActiveDate:null, completedLessons:[]}),
+  learnScreen:'home', learnLessonId:null,
+  learnFlashIndex:0, learnFlashFlipped:false,
+  learnQuiz:null,
+};
+
+function loadJSON(key, fallback){ try{ const v = localStorage.getItem(key); return v?JSON.parse(v):fallback; }catch(e){ return fallback; } }
+function saveJSON(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
+function normalize(s){ return (s||'').toLowerCase().replace(/[¿?¡!.,，。！？]/g,'').trim(); }
+
+function findPhraseMatch(text, langCode){
+  const norm = normalize(text);
+  if(!norm) return null;
+  let best=null, bestScore=0;
+  DICT.forEach(p=>{
+    const candidates=[];
+    if(langCode==='en'){ candidates.push(p.en); }
+    else { const t=p.translations[langCode]; if(t){ candidates.push(t.casual); if(t.formal) candidates.push(t.formal); } }
+    candidates.forEach(c=>{
+      if(!c) return;
+      const cn = normalize(c);
+      let score=0;
+      if(cn===norm) score=999;
+      else if((cn.includes(norm)||norm.includes(cn)) && norm.length>2) score=Math.min(cn.length,norm.length);
+      if(score>bestScore){ bestScore=score; best=p; }
+    });
+  });
+  return best;
+}
+
+function getTranslation(phrase, toLang, tone){
+  if(toLang==='en') return { text: phrase.en, roman:null };
+  const t = phrase.translations[toLang];
+  if(!t) return null;
+  return { text: t[tone] || t.casual, roman: t.roman || null };
+}
+function getVocab(phrase, toLang){
+  if(toLang==='en'){
+    const w = phrase.en.split(' ')[0].replace(/[?.!,]/g,'');
+    return { word:w, roman:null, meaning:'Key word from this phrase' };
+  }
+  return phrase.vocab[toLang] || null;
+}
+function phraseInLang(phrase, langCode, tone){
+  if(langCode==='en') return phrase.en;
+  const t = phrase.translations[langCode];
+  return t ? (t[tone]||t.casual) : phrase.en;
+}
+
+let recognizer = null;
+
+function setTab(tab){
+  state.tab = tab;
+  render();
+}
+
+function toggleSettings(open){
+  document.getElementById('sheetOverlay').classList.toggle('open', open);
+}
+
+function goStep(step){ state.step = step; render(); }
+
+function startNewConversation(){
+  state.step='setup'; state.currentMatch=null; state.currentCustomText=null;
+  render();
+}
+
+function swapLangs(){
+  const f=state.from, t=state.to; state.from=t; state.to=f; render();
+}
+
+function onSelectChange(which, val){
+  const other = which==='from' ? 'to' : 'from';
+  if(val === state[other]){
+    // Same language picked for both sides — swap the other field
+    // to whatever this field used to be, so from/to are never equal.
+    state[other] = state[which];
+  }
+  state[which] = val;
+  render();
+}
+
+function onAutoDetectChange(checked){
+  state.autoDetect = checked; render();
+}
+
+function beginListening(){
+  state.step='listen'; render();
+}
+
+function micErrorMessage(code){
+  switch(code){
+    case 'not-allowed':
+    case 'permission-denied':
+      return "Microphone access is blocked — check your browser/site settings and allow the mic, then try again.";
+    case 'no-speech':
+      return "Didn't catch any speech — try again, a little closer to the mic.";
+    case 'audio-capture':
+      return "No microphone found on this device — try typing below instead.";
+    case 'network':
+      return "Voice recognition needs an internet connection to work and couldn't reach it — try typing below.";
+    case 'service-not-allowed':
+      return "Voice input isn't allowed in this environment — try typing below, or open this page directly in Chrome.";
+    default:
+      return "Couldn't hear that clearly (" + (code||'unknown error') + ") — try again or type your phrase below.";
+  }
+}
+
+function startRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const statusEl = document.getElementById('micStatus');
+  if(!window.isSecureContext){
+    if(statusEl) statusEl.textContent = "Voice input needs a secure (https) connection — try typing below.";
+    return;
+  }
+  if(!SR){
+    if(statusEl) statusEl.textContent = "Voice input isn't available in this browser — try typing below, or tap a suggested phrase.";
+    return;
+  }
+  if(statusEl) statusEl.textContent = "Requesting microphone access…";
+
+  const launchRecognizer = ()=>{
+    try{
+      recognizer = new SR();
+      recognizer.lang = LANGS[state.from].code;
+      recognizer.interimResults = false;
+      recognizer.maxAlternatives = 1;
+      state.listening = true; render();
+
+      let heardAnything = false;
+      recognizer.onstart = ()=>{
+        const s = document.getElementById('micStatus');
+        if(s) s.textContent = "Listening…";
+      };
+      recognizer.onresult = (e)=>{
+        heardAnything = true;
+        const transcript = e.results[0][0].transcript;
+        state.listening = false;
+        handleSpokenText(transcript);
+      };
+      recognizer.onerror = (e)=>{
+        console.error('SpeechRecognition error:', e.error, e.message||'');
+        state.listening = false;
+        const s = document.getElementById('micStatus');
+        if(s) s.textContent = micErrorMessage(e.error);
+        render();
+      };
+      recognizer.onend = ()=>{
+        if(state.listening){
+          state.listening=false;
+          const s = document.getElementById('micStatus');
+          if(!heardAnything && s) s.textContent = "Didn't catch anything — try again or type your phrase below.";
+          render();
+        }
+      };
+      recognizer.start();
+    }catch(err){
+      console.error('SpeechRecognition init error:', err);
+      state.listening=false;
+      if(statusEl) statusEl.textContent = "Voice input isn't available right now — try typing below.";
+      render();
+    }
+  };
+
+  // Explicitly request mic permission first so we get a clear, specific
+  // error (not-allowed / no device / etc.) instead of silent failure.
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true}).then((stream)=>{
+      stream.getTracks().forEach(t=>t.stop());
+      launchRecognizer();
+    }).catch((err)=>{
+      console.error('getUserMedia error:', err.name, err.message);
+      const s = document.getElementById('micStatus');
+      if(s) s.textContent = micErrorMessage(err.name==='NotAllowedError'?'not-allowed': err.name==='NotFoundError'?'audio-capture':err.name);
+    });
+  } else {
+    // No mediaDevices API available (very old browser, or blocked entirely) — try anyway.
+    launchRecognizer();
+  }
+}
+function stopRecognition(){
+  if(recognizer){ try{ recognizer.stop(); }catch(e){} }
+  state.listening=false; render();
+}
+
+function handleSpokenText(text){
+  const match = findPhraseMatch(text, state.from);
+  state.currentMatch = match;
+  state.currentCustomText = match ? null : text;
+  state.step='translate';
+  if(match){
+    logExchange(match, phraseInLang(match, state.from, state.tone));
+  } else {
+    logExchange(null, text);
+  }
+  render();
+}
+
+function selectChip(idx){
+  const p = DICT[idx];
+  state.currentMatch = p;
+  state.currentCustomText = null;
+  state.step='translate';
+  logExchange(p, phraseInLang(p, state.from, state.tone));
+  render();
+}
+
+function submitTyped(){
+  const input = document.getElementById('typedInput');
+  if(!input || !input.value.trim()) return;
+  handleSpokenText(input.value.trim());
+}
+
+function setTone(tone){ state.tone = tone; render(); }
+
+function logExchange(matchedPhrase, originalText){
+  state.sessionExchanges += 1;
+  const hist = loadJSON('tangerine_history', []);
+  let translatedText = '—';
+  if(matchedPhrase){
+    const tr = getTranslation(matchedPhrase, state.to, state.tone);
+    translatedText = tr ? tr.text : '—';
+    const v = getVocab(matchedPhrase, state.to);
+    if(v && !state.sessionVocab.find(x=>x.word===v.word)){
+      state.sessionVocab.push(Object.assign({}, v, {lang:state.to}));
+    }
+  }
+  hist.unshift({ from:state.from, to:state.to, original:originalText, translated:translatedText, time:Date.now() });
+  saveJSON('tangerine_history', hist.slice(0,50));
+}
+
+function playTranslation(text, langCode){
+  if(!('speechSynthesis' in window)) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = LANGS[langCode].code;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function saveVocabToPhrasebook(){
+  const book = loadJSON('tangerine_phrasebook', []);
+  state.sessionVocab.forEach(v=>{
+    if(!book.find(b=>b.word===v.word && b.lang===v.lang)){
+      book.unshift(Object.assign({}, v, {savedAt:Date.now()}));
+    }
+  });
+  saveJSON('tangerine_phrasebook', book);
+  render();
+}
+
+function removeVocabItem(idx){
+  const book = loadJSON('tangerine_phrasebook', []);
+  book.splice(idx,1);
+  saveJSON('tangerine_phrasebook', book);
+  render();
+}
+
+function clearHistory(){
+  saveJSON('tangerine_history', []);
+  render();
+}
+
+function endToSummary(){ state.step='summary'; render(); }
+
+/* ---------- Learn tab logic ---------- */
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function daysBetween(a, b){
+  return Math.round((new Date(b) - new Date(a)) / 86400000);
+}
+
+function saveLearnProgress(){
+  saveJSON('tangerine_learn_progress', state.learnProgress);
+}
+
+// Call whenever the user does any learning activity (quiz answer, flashcard flip).
+// Updates the daily streak at most once per day.
+function touchLearnStreak(){
+  const p = state.learnProgress;
+  const today = todayStr();
+  if(p.lastActiveDate === today) return; // already counted today
+  if(p.lastActiveDate){
+    const gap = daysBetween(p.lastActiveDate, today);
+    p.streak = (gap === 1) ? p.streak + 1 : 1;
+  } else {
+    p.streak = 1;
+  }
+  p.lastActiveDate = today;
+  saveLearnProgress();
+}
+
+function addXP(amount){
+  state.learnProgress.xp += amount;
+  saveLearnProgress();
+}
+
+function isLessonUnlocked(idx){
+  if(idx === 0) return true;
+  const prev = LEARN_LESSONS[idx-1];
+  return state.learnProgress.completedLessons.includes(prev.id);
+}
+
+function goLearnHome(){
+  state.learnScreen='home'; state.learnLessonId=null; render();
+}
+
+function openLesson(lessonId){
+  const idx = LEARN_LESSONS.findIndex(l=>l.id===lessonId);
+  if(!isLessonUnlocked(idx)) return;
+  state.learnLessonId = lessonId;
+  state.learnScreen = 'lesson';
+  render();
+}
+
+function currentLesson(){
+  return LEARN_LESSONS.find(l=>l.id===state.learnLessonId);
+}
+
+function startFlashcards(){
+  state.learnFlashIndex = 0;
+  state.learnFlashFlipped = false;
+  state.learnScreen = 'flashcards';
+  render();
+}
+
+function flipFlashcard(){
+  state.learnFlashFlipped = !state.learnFlashFlipped;
+  touchLearnStreak();
+  addXP(1);
+  render();
+}
+
+function nextFlashcard(){
+  const words = currentLesson().words;
+  state.learnFlashIndex = Math.min(state.learnFlashIndex + 1, words.length - 1);
+  state.learnFlashFlipped = false;
+  render();
+}
+function prevFlashcard(){
+  state.learnFlashIndex = Math.max(state.learnFlashIndex - 1, 0);
+  state.learnFlashFlipped = false;
+  render();
+}
+
+function shuffleArr(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function generateQuizQuestions(lesson){
+  const allOtherWords = LEARN_LESSONS.flatMap(l=>l.words).filter(w=>!lesson.words.includes(w));
+  return shuffleArr(lesson.words).map(w=>{
+    const askKorean = Math.random() < 0.5; // true: show English, ask Korean. false: show Korean, ask English.
+    const promptText = askKorean ? w.en : w.ko;
+    const correctAnswer = askKorean ? w.ko : w.en;
+    const distractorPool = shuffleArr(allOtherWords.length >= 3 ? allOtherWords : lesson.words.filter(x=>x!==w));
+    const distractors = distractorPool.slice(0,3).map(d=> askKorean ? d.ko : d.en);
+    const options = shuffleArr([correctAnswer, ...distractors]);
+    return { promptText, correctAnswer, options, roman: askKorean ? w.roman : null, askKorean };
+  });
+}
+
+function startQuiz(){
+  const lesson = currentLesson();
+  state.learnQuiz = {
+    questions: generateQuizQuestions(lesson),
+    index: 0,
+    correctCount: 0,
+    answered: null, // selected option text, or null if unanswered
+  };
+  state.learnScreen = 'quiz';
+  render();
+}
+
+function answerQuizQuestion(option){
+  const q = state.learnQuiz;
+  if(q.answered !== null) return; // already answered this question
+  q.answered = option;
+  touchLearnStreak();
+  if(option === q.questions[q.index].correctAnswer){
+    q.correctCount += 1;
+    addXP(10);
+  }
+  render();
+}
+
+function nextQuizQuestion(){
+  const q = state.learnQuiz;
+  if(q.index < q.questions.length - 1){
+    q.index += 1;
+    q.answered = null;
+    render();
+  } else {
+    finishQuiz();
+  }
+}
+
+function finishQuiz(){
+  const q = state.learnQuiz;
+  const lesson = currentLesson();
+  const alreadyCompleted = state.learnProgress.completedLessons.includes(lesson.id);
+  if(!alreadyCompleted){
+    state.learnProgress.completedLessons.push(lesson.id);
+    addXP(30);
+  }
+  saveLearnProgress();
+  state.learnScreen = 'quizResult';
+  render();
+}
+
+/* ---------- render ---------- */
+
+function render(){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===state.tab));
+  const stepperEl = document.getElementById('stepper');
+  const contentEl = document.getElementById('content');
+
+  if(state.tab==='talk'){
+    const steps=['setup','listen','translate','summary'];
+    const idx = steps.indexOf(state.step);
+    stepperEl.style.display='flex';
+    stepperEl.innerHTML = steps.map((s,i)=>`<div class="dot ${i===idx?'active':(i<idx?'done':'')}"></div>`).join('');
+    contentEl.innerHTML = state.step==='setup' ? renderSetup()
+      : state.step==='listen' ? renderListen()
+      : state.step==='translate' ? renderTranslate()
+      : renderSummary();
+    if(state.step==='listen'){
+      const statusEl = document.getElementById('micStatus');
+      if(statusEl && state.listening) statusEl.textContent='Listening…';
+    }
+  } else if(state.tab==='history'){
+    stepperEl.style.display='none';
+    contentEl.innerHTML = renderHistory();
+  } else if(state.tab==='learn'){
+    stepperEl.style.display='none';
+    contentEl.innerHTML = state.learnScreen==='home' ? renderLearnHome()
+      : state.learnScreen==='lesson' ? renderLearnLessonDetail()
+      : state.learnScreen==='flashcards' ? renderLearnFlashcards()
+      : state.learnScreen==='quiz' ? renderLearnQuiz()
+      : renderLearnQuizResult();
+  } else {
+    stepperEl.style.display='none';
+    contentEl.innerHTML = renderPhrasebook();
+  }
+}
+
+function renderSetup(){
+  const langOptions = (selected)=> Object.keys(LANGS).map(k=>`<option value="${k}" ${k===selected?'selected':''}>${LANGS[k].flag} ${LANGS[k].name}</option>`).join('');
+  return `
+    <h2 class="view-title">Start a conversation</h2>
+    <p class="view-sub">Pick your language and who you're talking to — TangerineAI handles the rest, live.</p>
+
+    <div>
+      <span class="field-label">${state.autoDetect ? 'Detecting automatically' : 'You speak'}</span>
+      <div class="lang-row">
+        <span class="flag">${LANGS[state.from].flag}</span>
+        <select onchange="onSelectChange('from', this.value)" ${state.autoDetect?'disabled':''}>${langOptions(state.from)}</select>
+      </div>
+    </div>
+
+    <button class="swap-btn" onclick="swapLangs()" aria-label="Swap languages">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4"><path d="M17 3l4 4-4 4M3 7h18M7 21l-4-4 4-4M21 17H3"/></svg>
+    </button>
+
+    <div>
+      <span class="field-label">Translate into</span>
+      <div class="lang-row">
+        <span class="flag">${LANGS[state.to].flag}</span>
+        <select onchange="onSelectChange('to', this.value)">${langOptions(state.to)}</select>
+      </div>
+    </div>
+
+    <div class="toggle-row" style="margin-top:4px;">
+      <span>Auto-detect my language</span>
+      <label class="switch">
+        <input type="checkbox" ${state.autoDetect?'checked':''} onchange="onAutoDetectChange(this.checked)">
+        <span class="slider-pill"></span>
+      </label>
+    </div>
+
+    <button class="primary-btn" style="margin-top:auto;" onclick="beginListening()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4"/></svg>
+      Start talking
+    </button>
+  `;
+}
+
+function renderListen(){
+  const chipLang = state.from;
+  const chips = DICT.slice(0,6).map((p,i)=>`<button class="chip" onclick="selectChip(${i})">${phraseInLang(p, chipLang, state.tone)}</button>`).join('');
+  return `
+    <h2 class="view-title">Say something</h2>
+    <p class="view-sub">Speaking ${LANGS[state.from].name} → translating to ${LANGS[state.to].name}</p>
+
+    <div class="mic-stage">
+      <div class="mic-wrap">
+        <div class="mic-ring"></div>
+        <button class="mic-btn ${state.listening?'listening':''}" onclick="${state.listening?'stopRecognition()':'startRecognition()'}" aria-label="Start speaking">
+          ${state.listening ? `<div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>` :
+          `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4"/></svg>`}
+        </button>
+      </div>
+      <div class="mic-status" id="micStatus">${state.listening?'Listening…':'Tap the mic and speak, or try a phrase below'}</div>
+    </div>
+
+    <div class="chip-row">${chips}</div>
+
+    <div class="type-row">
+      <input id="typedInput" type="text" placeholder="Or type what you'd say…" onkeydown="if(event.key==='Enter') submitTyped()">
+      <button class="send-btn" onclick="submitTyped()" aria-label="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+function renderTranslate(){
+  const match = state.currentMatch;
+  const originalText = match ? phraseInLang(match, state.from, state.tone) : state.currentCustomText;
+  const tr = match ? getTranslation(match, state.to, state.tone) : null;
+  const vocab = match ? getVocab(match, state.to) : null;
+  const showTone = match && match.translations[state.to] && match.translations[state.to].formal;
+
+  return `
+    <h2 class="view-title">Translation</h2>
+
+    <div class="bubble original">
+      <div class="bubble-label">${LANGS[state.from].flag} ${LANGS[state.from].name}</div>
+      <div class="bubble-text" style="color:var(--ink);font-size:15.5px;">${originalText}</div>
+    </div>
+
+    ${tr ? `
+    <div class="bubble translated">
+      <div class="bubble-label" style="color:#fff;">${LANGS[state.to].flag} ${LANGS[state.to].name}</div>
+      <div class="bubble-text">${tr.text}</div>
+      ${tr.roman ? `<div class="roman">${tr.roman}</div>` : ''}
+      <div class="play-row">
+        <button class="play-btn" onclick="playTranslation('${tr.text.replace(/'/g,"\\'")}','${state.to}')" aria-label="Play translation">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <span style="font-size:12px;opacity:.75;">Hear it spoken aloud</span>
+      </div>
+    </div>
+    ` : `
+    <div class="demo-note">This concept demo recognizes a curated phrase set — it didn't catch a match for that one. Try a suggested phrase from the mic screen to see the full translation, pronunciation and playback.</div>
+    `}
+
+    ${showTone ? `
+    <div>
+      <span class="field-label">Tone</span>
+      <div class="tone-toggle">
+        <button class="${state.tone==='casual'?'active':''}" onclick="setTone('casual')">Casual</button>
+        <button class="${state.tone==='formal'?'active':''}" onclick="setTone('formal')">Formal</button>
+      </div>
+    </div>
+    ` : ''}
+
+    ${vocab ? `
+    <div class="vocab-card">
+      <div>
+        <div class="vocab-word">${vocab.word}</div>
+        ${vocab.roman ? `<div class="roman" style="margin-top:0;">${vocab.roman}</div>` : ''}
+        <div class="vocab-meaning">${vocab.meaning} — added to this session's vocabulary</div>
+      </div>
+    </div>
+    ` : ''}
+
+    <div class="btn-row">
+      <button class="ghost-btn" onclick="goStep('listen')">Ask another</button>
+      <button class="primary-btn" onclick="endToSummary()">End & see summary</button>
+    </div>
+  `;
+}
+
+function renderSummary(){
+  const vocabRows = state.sessionVocab.map(v=>`
+    <div class="vocab-list-item">
+      <div>
+        <div class="vocab-word" style="font-size:15px;">${v.word}</div>
+        <div class="vocab-meaning">${v.roman ? v.roman+' — ' : ''}${v.meaning}</div>
+      </div>
+    </div>
+  `).join('') || `<p class="view-sub">No new vocabulary yet this session.</p>`;
+
+  return `
+    <h2 class="view-title">Session summary</h2>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-num">${state.sessionExchanges}</div>
+        <div class="stat-label">Phrases translated</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">${state.sessionVocab.length}</div>
+        <div class="stat-label">New words learned</div>
+      </div>
+    </div>
+
+    <span class="field-label">Vocabulary this session</span>
+    <div>${vocabRows}</div>
+
+    ${state.sessionVocab.length ? `<button class="ghost-btn" onclick="saveVocabToPhrasebook()">Save all to phrasebook</button>` : ''}
+
+    <div class="vision-line">"A world where everyone can speak to anyone."</div>
+
+    <button class="primary-btn" onclick="startNewConversation()">Start a new conversation</button>
+  `;
+}
+
+function renderHistory(){
+  const hist = loadJSON('tangerine_history', []);
+  if(!hist.length){
+    return `<div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <p>Your past conversations will show up here once you start talking.</p>
+    </div>`;
+  }
+  const rows = hist.map(h=>`
+    <div class="hist-item">
+      <div class="hist-top">
+        <span>${LANGS[h.from].flag} → ${LANGS[h.to].flag}</span>
+        <span>${new Date(h.time).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</span>
+      </div>
+      <div class="hist-orig">${h.original}</div>
+      <div class="hist-trans">${h.translated}</div>
+    </div>
+  `).join('');
+  return `<h2 class="view-title">History</h2>${rows}<button class="ghost-btn" style="margin-top:14px;" onclick="clearHistory()">Clear history</button>`;
+}
+
+function renderPhrasebook(){
+  const book = loadJSON('tangerine_phrasebook', []);
+  if(!book.length){
+    return `<div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      <p>No saved words yet — finish a conversation and save its vocabulary here.</p>
+    </div>`;
+  }
+  const rows = book.map((v,i)=>`
+    <div class="vocab-list-item">
+      <div>
+        <div class="vocab-word" style="font-size:15px;">${LANGS[v.lang] ? LANGS[v.lang].flag+' ' : ''}${v.word}</div>
+        <div class="vocab-meaning">${v.roman ? v.roman+' — ' : ''}${v.meaning}</div>
+      </div>
+      <button class="remove" onclick="removeVocabItem(${i})">Remove</button>
+    </div>
+  `).join('');
+  return `<h2 class="view-title">Phrasebook</h2>${rows}`;
+}
+
+/* ---------- Learn tab render ---------- */
+
+function renderLearnHome(){
+  const p = state.learnProgress;
+  const lessonRows = LEARN_LESSONS.map((lesson, idx)=>{
+    const unlocked = isLessonUnlocked(idx);
+    const done = p.completedLessons.includes(lesson.id);
+    const badge = done
+      ? `<div class="badge" title="Completed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></div>`
+      : (unlocked ? '' : `<div class="lock-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></div>`);
+    return `
+      <button class="lesson-card ${unlocked?'':'locked'}" onclick="${unlocked?`openLesson('${lesson.id}')`:''}">
+        <div class="emoji">${lesson.emoji}</div>
+        <div class="info">
+          <div class="title">${lesson.title}</div>
+          <div class="sub">${lesson.words.length} words${done?' · Completed':''}</div>
+        </div>
+        ${badge}
+      </button>
+    `;
+  }).join('');
+
+  return `
+    <h2 class="view-title">Learn</h2>
+    <p class="view-sub">Build your Korean vocabulary, one lesson at a time.</p>
+
+    <div class="learn-stats">
+      <div class="learn-stat">
+        <div class="val">🔥 ${p.streak}</div>
+        <div class="lbl">Day streak</div>
+      </div>
+      <div class="learn-stat">
+        <div class="val">⭐ ${p.xp}</div>
+        <div class="lbl">Total XP</div>
+      </div>
+      <div class="learn-stat">
+        <div class="val">${p.completedLessons.length}/${LEARN_LESSONS.length}</div>
+        <div class="lbl">Lessons done</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">${lessonRows}</div>
+  `;
+}
+
+function renderLearnLessonDetail(){
+  const lesson = currentLesson();
+  const done = state.learnProgress.completedLessons.includes(lesson.id);
+  const preview = lesson.words.slice(0,8).map(w=>`<span class="word-chip">${w.en}</span>`).join('');
+  return `
+    <button class="ghost-btn" style="align-self:flex-start;padding:8px 14px;font-size:12.5px;" onclick="goLearnHome()">← All lessons</button>
+    <div class="lesson-detail-card">
+      <div class="emoji">${lesson.emoji}</div>
+      <h3>${lesson.title}</h3>
+      <p class="view-sub" style="margin:0;">${lesson.words.length} words${done?' · You\'ve completed this lesson':''}</p>
+      <div class="word-chip-row">${preview}</div>
+    </div>
+    <div class="btn-row" style="margin-top:0;">
+      <button class="ghost-btn" onclick="startFlashcards()">📇 Flashcards</button>
+      <button class="primary-btn" onclick="startQuiz()">📝 Take Quiz</button>
+    </div>
+  `;
+}
+
+function renderLearnFlashcards(){
+  const lesson = currentLesson();
+  const w = lesson.words[state.learnFlashIndex];
+  const isLast = state.learnFlashIndex === lesson.words.length - 1;
+  return `
+    <button class="ghost-btn" style="align-self:flex-start;padding:8px 14px;font-size:12.5px;" onclick="goLearnHome()">← All lessons</button>
+    <div class="flash-progress">Card ${state.learnFlashIndex+1} of ${lesson.words.length}</div>
+    <div class="flashcard-wrap">
+      <div class="flashcard ${state.learnFlashFlipped?'flipped':''}" onclick="flipFlashcard()">
+        <div class="flashcard-face front">
+          <div class="word">${w.en}</div>
+          <div class="hint">Tap to flip</div>
+        </div>
+        <div class="flashcard-face back">
+          <div class="word">${w.ko}</div>
+          <div class="roman">${w.roman}</div>
+          <div class="hint">Tap to flip back</div>
+        </div>
+      </div>
+    </div>
+    <div class="flash-nav-row">
+      <button class="flash-nav-btn" onclick="prevFlashcard()" ${state.learnFlashIndex===0?'disabled':''} aria-label="Previous">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      ${isLast ? `<button class="primary-btn" style="flex:1;max-width:200px;" onclick="goLearnHome()">Done reviewing</button>`
+               : `<button class="flash-nav-btn" onclick="nextFlashcard()" aria-label="Next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>`}
+    </div>
+  `;
+}
+
+function renderLearnQuiz(){
+  const q = state.learnQuiz;
+  const question = q.questions[q.index];
+  const pct = Math.round((q.index / q.questions.length) * 100);
+  const optionsHtml = question.options.map(opt=>{
+    let cls = 'quiz-option';
+    if(q.answered !== null){
+      cls += ' disabled';
+      if(opt === question.correctAnswer) cls += ' correct';
+      else if(opt === q.answered) cls += ' incorrect';
+    }
+    return `<button class="${cls}" onclick="answerQuizQuestion('${opt.replace(/'/g,"\\'")}')">${opt}</button>`;
+  }).join('');
+
+  return `
+    <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%;"></div></div>
+    <p class="view-sub" style="text-align:center;margin:0;">Question ${q.index+1} of ${q.questions.length}</p>
+    <div class="quiz-prompt-card">
+      <div class="lbl">${question.askKorean ? 'How do you say this in Korean?' : 'What does this mean?'}</div>
+      <div class="word">${question.promptText}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px;">${optionsHtml}</div>
+    ${q.answered !== null ? `<button class="primary-btn" onclick="nextQuizQuestion()">${q.index < q.questions.length-1 ? 'Next question' : 'See results'}</button>` : ''}
+  `;
+}
+
+function renderLearnQuizResult(){
+  const q = state.learnQuiz;
+  const lesson = currentLesson();
+  const total = q.questions.length;
+  const pct = Math.round((q.correctCount/total)*100);
+  const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🎉' : '💪';
+  const xpEarned = q.correctCount * 10 + (state.learnProgress.completedLessons.includes(lesson.id) ? 0 : 30);
+  return `
+    <div class="quiz-result-card">
+      <div class="big-emoji">${emoji}</div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;margin:6px 0 0;">${lesson.title} complete!</h3>
+      <div class="score">${q.correctCount}/${total} correct</div>
+      <div class="xp-pill">⭐ +${xpEarned} XP</div>
+    </div>
+    <div class="btn-row" style="margin-top:0;">
+      <button class="ghost-btn" onclick="startQuiz()">Retry quiz</button>
+      <button class="primary-btn" onclick="goLearnHome()">Back to lessons</button>
+    </div>
+  `;
+}
+
+render();
+</script>
+</body>
+</html>
